@@ -2,28 +2,41 @@
 <html>
 <head>
     <style>
-        body { margin: 0; overflow: hidden; background: transparent; cursor: default; }
-        #pet {
-            width: 16px;   /* Width of one frame */
-            height: 32px;  /* Height of one frame */
-            background-image: url('spritesheet.png');
-            background-size: 64px 128px; /* Total size: 16*4 by 32*4 */
-            background-repeat: no-repeat;
-            position: absolute;
-            image-rendering: pixelated; /* Keeps the pixel art sharp */
+        /* Essential for Notion Embeds */
+        html, body { 
+            margin: 0; 
+            padding: 0; 
+            width: 100vw; 
+            height: 100vh; 
+            overflow: hidden; 
+            background-color: rgba(0, 0, 0, 0); /* Completely transparent */
         }
-        
-        /* Horizontal walk cycle */
+
+        #pet {
+            position: absolute;
+            width: 16px; 
+            height: 32px;
+            background-image: url('spritesheet.png');
+            background-size: 64px 128px;
+            background-repeat: no-repeat;
+            image-rendering: pixelated;
+            /* Scale it up so you can actually see the art */
+            transform: scale(3);
+            transform-origin: top left;
+            transition: background-position-y 0.1s;
+        }
+
+        /* Walking Animation logic */
         .walking {
             animation: walk-cycle 0.6s steps(4) infinite;
         }
-        
+
         @keyframes walk-cycle {
             from { background-position-x: 0px; }
-            to { background-position-x: -64px; } /* Moves across all 4 frames */
+            to { background-position-x: -64px; }
         }
-        
-        /* Directional Rows (Vertical offset) */
+
+        /* Directional Rows */
         .face-down  { background-position-y: 0px; }
         .face-right { background-position-y: -32px; }
         .face-up    { background-position-y: -64px; }
@@ -31,44 +44,52 @@
     </style>
 </head>
 <body>
-    <div id="pet"></div>
+    <div id="pet" class="face-down"></div>
+
     <script>
         const pet = document.getElementById('pet');
-        let petPos = { x: 0, y: 0 };
-        let mousePos = { x: 0, y: 0 };
-        
-        window.onmousemove = (e) => { mousePos = { x: e.clientX, y: e.clientY }; };
-        
+        let petPos = { x: 50, y: 50 }; // Starting position
+        let mousePos = { x: 50, y: 50 };
+
+        window.onmousemove = (e) => {
+            mousePos.x = e.clientX;
+            mousePos.y = e.clientY;
+        };
+
         function update() {
-            const dx = mousePos.x - petPos.x;
-            const dy = mousePos.y - petPos.y;
+            const dx = mousePos.x - (petPos.x + 24); // Offset for scale
+            const dy = mousePos.y - (petPos.y + 48);
             const distance = Math.sqrt(dx * dx + dy * dy);
-        
-            if (distance > 2) {
+
+            // 1. MOVEMENT & IDLE LOGIC
+            if (distance > 5) {
+                // WALKING STATE
                 pet.classList.add('walking');
                 
-                // Determine Direction
+                // Determine direction for row switching
                 pet.classList.remove('face-up', 'face-down', 'face-left', 'face-right');
-                
                 if (Math.abs(dx) > Math.abs(dy)) {
-                    // Moving primarily horizontally
                     pet.classList.add(dx > 0 ? 'face-right' : 'face-left');
                 } else {
-                    // Moving primarily vertically
                     pet.classList.add(dy > 0 ? 'face-down' : 'face-up');
                 }
-        
-                // Movement Speed
-                petPos.x += dx * 0.04; 
-                petPos.y += dy * 0.04;
-                pet.style.left = `${petPos.x}px`;
-                pet.style.top = `${petPos.y}px`;
+
+                // Follow cursor
+                petPos.x += dx * 0.025; 
+                petPos.y += dy * 0.025;
             } else {
+                // IDLE STATE
+                // Removing the 'walking' class stops the animation
+                // and snaps the background-position-x back to 0 (the standing frame)
                 pet.classList.remove('walking');
             }
+
+            pet.style.left = `${petPos.x}px`;
+            pet.style.top = `${petPos.y}px`;
             
             requestAnimationFrame(update);
         }
+
         update();
     </script>
 </body>
