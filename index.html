@@ -4,14 +4,22 @@
     <style>
         body { margin: 0; overflow: hidden; background: transparent; cursor: default; }
         #pet {
-            position: absolute;
-            width: 32px; height: 32px; /* Set to your sprite size */
-            background: url('spritesheet.png'); /* Replace with your image link */
-            background-size: cover;
-            transition: transform 0.1s;
+            width: 32px;  /* Width of a SINGLE frame */
+            height: 32px; /* Height of a SINGLE frame */
+            background-image: url('YOUR_SPRITE_SHEET.png');
+            background-repeat: no-repeat;
+            background-size: auto 100%; /* Keeps height consistent */
         }
-        .walking { animation: walk 0.5s steps(4) infinite; } /* Adjust steps to match your frames */
-        @keyframes walk { from { background-position: 0; } to { background-position: -128px; } }
+        
+        /* This creates the movement */
+        .walking {
+            animation: walk-cycle 0.6s steps(4) infinite;
+        }
+        
+        @keyframes walk-cycle {
+            from { background-position: 0px; }
+            to { background-position: -128px; } /* Total width of the sheet */
+        }
     </style>
 </head>
 <body>
