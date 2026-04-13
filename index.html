@@ -4,22 +4,30 @@
     <style>
         body { margin: 0; overflow: hidden; background: transparent; cursor: default; }
         #pet {
-            width: 32px;  /* Width of a SINGLE frame */
-            height: 32px; /* Height of a SINGLE frame */
-            background-image: url('YOUR_SPRITE_SHEET.png');
+            width: 16px;   /* Width of one frame */
+            height: 32px;  /* Height of one frame */
+            background-image: url('spritesheet.png');
+            background-size: 64px 128px; /* Total size: 16*4 by 32*4 */
             background-repeat: no-repeat;
-            background-size: auto 100%; /* Keeps height consistent */
+            position: absolute;
+            image-rendering: pixelated; /* Keeps the pixel art sharp */
         }
         
-        /* This creates the movement */
+        /* Horizontal walk cycle */
         .walking {
             animation: walk-cycle 0.6s steps(4) infinite;
         }
         
         @keyframes walk-cycle {
-            from { background-position: 0px; }
-            to { background-position: -128px; } /* Total width of the sheet */
+            from { background-position-x: 0px; }
+            to { background-position-x: -64px; } /* Moves across all 4 frames */
         }
+        
+        /* Directional Rows (Vertical offset) */
+        .face-down  { background-position-y: 0px; }
+        .face-right { background-position-y: -32px; }
+        .face-up    { background-position-y: -64px; }
+        .face-left  { background-position-y: -96px; }
     </style>
 </head>
 <body>
@@ -28,17 +36,36 @@
         const pet = document.getElementById('pet');
         let petPos = { x: 0, y: 0 };
         let mousePos = { x: 0, y: 0 };
-
+        
         window.onmousemove = (e) => { mousePos = { x: e.clientX, y: e.clientY }; };
-
+        
         function update() {
-            // Easing/Follow Logic
-            petPos.x += (mousePos.x - petPos.x) * 0.05;
-            petPos.y += (mousePos.y - petPos.y) * 0.05;
-
-            // Flip sprite based on direction
-            const scaleX = mousePos.x > petPos.x ? 1 : -1;
-            pet.style.transform = `translate(${petPos.x}px, ${petPos.y}px) scaleX(${scaleX})`;
+            const dx = mousePos.x - petPos.x;
+            const dy = mousePos.y - petPos.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+        
+            if (distance > 2) {
+                pet.classList.add('walking');
+                
+                // Determine Direction
+                pet.classList.remove('face-up', 'face-down', 'face-left', 'face-right');
+                
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    // Moving primarily horizontally
+                    pet.classList.add(dx > 0 ? 'face-right' : 'face-left');
+                } else {
+                    // Moving primarily vertically
+                    pet.classList.add(dy > 0 ? 'face-down' : 'face-up');
+                }
+        
+                // Movement Speed
+                petPos.x += dx * 0.04; 
+                petPos.y += dy * 0.04;
+                pet.style.left = `${petPos.x}px`;
+                pet.style.top = `${petPos.y}px`;
+            } else {
+                pet.classList.remove('walking');
+            }
             
             requestAnimationFrame(update);
         }
