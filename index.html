@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { margin: 0; overflow: hidden; background: transparent; cursor: default; }
+        #pet {
+            position: absolute;
+            width: 32px; height: 32px; /* Set to your sprite size */
+            background: url('YOUR_SPRITE_SHEET.png'); /* Replace with your image link */
+            background-size: cover;
+            transition: transform 0.1s;
+        }
+        .walking { animation: walk 0.5s steps(4) infinite; } /* Adjust steps to match your frames */
+        @keyframes walk { from { background-position: 0; } to { background-position: -128px; } }
+    </style>
+</head>
+<body>
+    <div id="pet"></div>
+    <script>
+        const pet = document.getElementById('pet');
+        let petPos = { x: 0, y: 0 };
+        let mousePos = { x: 0, y: 0 };
+
+        window.onmousemove = (e) => { mousePos = { x: e.clientX, y: e.clientY }; };
+
+        function update() {
+            // Easing/Follow Logic
+            petPos.x += (mousePos.x - petPos.x) * 0.05;
+            petPos.y += (mousePos.y - petPos.y) * 0.05;
+
+            // Flip sprite based on direction
+            const scaleX = mousePos.x > petPos.x ? 1 : -1;
+            pet.style.transform = `translate(${petPos.x}px, ${petPos.y}px) scaleX(${scaleX})`;
+            
+            requestAnimationFrame(update);
+        }
+        update();
+    </script>
+</body>
+</html>
