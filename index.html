@@ -63,39 +63,44 @@
             isIdle = false;
         };
 
+        const walkSpeed = 1.5; // Fixed pixels per frame. Adjust this for faster/slower.
+
         function update() {
             const dx = targetPos.x - petPos.x;
             const dy = targetPos.y - petPos.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance > 2) {
-                // WALKING STATE
+        
+            // If we haven't reached the target yet
+            if (distance > walkSpeed) {
                 isIdle = false;
                 lastMoveTime = Date.now();
                 pet.classList.remove('special-idle');
                 pet.classList.add('walking');
                 
-                // Directional logic
+                // Directional logic for the spritesheet rows
                 pet.classList.remove('face-up', 'face-down', 'face-left', 'face-right');
                 if (Math.abs(dx) > Math.abs(dy)) {
                     pet.classList.add(dx > 0 ? 'face-right' : 'face-left');
                 } else {
                     pet.classList.add(dy > 0 ? 'face-down' : 'face-up');
                 }
-
-                // Move toward target
-                petPos.x += dx * 0.02; 
-                petPos.y += dy * 0.02;
+        
+                // --- CONSTANT VELOCITY MOVEMENT ---
+                // We move exactly 'walkSpeed' pixels toward the target
+                petPos.x += (dx / distance) * walkSpeed;
+                petPos.y += (dy / distance) * walkSpeed;
+        
             } else {
-                // STOPPED STATE
-                pet.classList.remove('walking');
+                // We arrived! Snap to the exact target and stop.
+                petPos.x = targetPos.x;
+                petPos.y = targetPos.y;
                 
-                // Check if we should trigger "Special Idle" after 3 seconds
+                pet.classList.remove('walking');
                 if (Date.now() - lastMoveTime > 3000) {
                     pet.classList.add('special-idle');
                 }
             }
-
+        
             pet.style.left = `${petPos.x}px`;
             pet.style.top = `${petPos.y}px`;
             
