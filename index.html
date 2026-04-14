@@ -5,7 +5,7 @@
         html, body { 
             margin: 0; padding: 0; 
             width: 100vw; height: 100vh; 
-            overflow: hidden; background: #222; /* Changed background so you can see the selection glow */
+            overflow: hidden; background: #333; /* Darker background to see the glow */
         }
 
         .pet-style {
@@ -16,22 +16,18 @@
             image-rendering: pixelated;
             transform: scale(3);
             transform-origin: top left;
-            border-radius: 4px;
-            transition: outline 0.2s; /* Smooth glow transition */
+            cursor: pointer; /* Shows you can click them */
+            transition: box-shadow 0.2s;
         }
 
-        /* The pet you are currently controlling gets a glow */
+        /* High-visibility selection glow */
         .selected {
-            outline: 2px solid yellow;
-            box-shadow: 0 0 15px yellow;
-            z-index: 10; /* Keep active pet on top */
+            box-shadow: 0 0 20px 5px yellow;
+            z-index: 100;
         }
 
         .walking { animation: walk-cycle 0.6s steps(4) infinite; }
-        .special-idle { animation: special-cycle 1s steps(2) infinite; }
-
         @keyframes walk-cycle { from { background-position-x: 0px; } to { background-position-x: -64px; } }
-        @keyframes special-cycle { from { background-position-x: 0px; } to { background-position-x: -32px; } }
 
         .face-down  { background-position-y: 0px; }
         .face-right { background-position-y: -32px; }
@@ -46,48 +42,58 @@
     <script>
         const walkSpeed = 4;
         const petRadius = 24;
-        let selectedIndex = 0; // 0 for pet1, 1 for pet2
+        let selectedIndex = 0; // Starts with Pet 1
 
         const pets = [
             {
                 el: document.getElementById('pet1'),
                 pos: { x: 100, y: 100 },
-                target: { x: 100, y: 100 },
-                lastMove: Date.now()
+                target: { x: 100, y: 100 }
             },
             {
                 el: document.getElementById('pet2'),
                 pos: { x: 300, y: 100 },
-                target: { x: 300, y: 100 },
-                lastMove: Date.now()
+                target: { x: 300, y: 100 }
             }
         ];
 
-        // 1. CLICK LOGIC: Only the selected pet updates its target
+        // 1. SPACEBAR TOGGLE
+        window.addEventListener('keydown', (e) => {
+            if (e.code === "Space") {
+                e.preventDefault();
+                toggleSelection();
+            }
+        });
+
+        // 2. CLICK TO SELECT (If space fails)
+        pets.forEach((p, index) => {
+            p.el.addEventListener('click', (e) => {
+                e.stopPropagation(); // Don't move when just selecting
+                selectedIndex = index;
+                updateVisualSelection();
+            });
+        });
+
+        function toggleSelection() {
+            selectedIndex = (selectedIndex === 0) ? 1 : 0;
+            updateVisualSelection();
+        }
+
+        function updateVisualSelection() {
+            pets.forEach((p, i) => {
+                if (i === selectedIndex) {
+                    p.el.classList.add('selected');
+                } else {
+                    p.el.classList.remove('selected');
+                }
+            });
+        }
+
+        // 3. MOVE ONLY SELECTED
         window.addEventListener('click', (e) => {
             const activePet = pets[selectedIndex];
             activePet.target.x = e.clientX - 24;
             activePet.target.y = e.clientY - 48;
-            activePet.lastMove = Date.now();
-            console.log("Moving Pet " + (selectedIndex + 1));
-        });
-
-        // 2. KEY LOGIC: Toggle the index
-        window.addEventListener('keydown', (e) => {
-            if (e.code === "Space") {
-                e.preventDefault(); // Stop page from scrolling
-                
-                // Remove class from old pet
-                pets[selectedIndex].el.classList.remove('selected');
-
-                // Switch index
-                selectedIndex = (selectedIndex === 0) ? 1 : 0;
-
-                // Add class to new pet
-                pets[selectedIndex].el.classList.add('selected');
-                
-                console.log("Switched control to Pet " + (selectedIndex + 1));
-            }
         });
 
         function update() {
@@ -97,9 +103,9 @@
                 const distance = Math.sqrt(dx * dx + dy * dy);
 
                 if (distance > walkSpeed) {
-                    p.el.classList.remove('special-idle');
                     p.el.classList.add('walking');
                     
+                    // Direction
                     p.el.classList.remove('face-up', 'face-down', 'face-left', 'face-right');
                     if (Math.abs(dx) > Math.abs(dy)) {
                         p.el.classList.add(dx > 0 ? 'face-right' : 'face-left');
@@ -111,33 +117,24 @@
                     p.pos.y += (dy / distance) * walkSpeed;
                 } else {
                     p.el.classList.remove('walking');
-                    if (Date.now() - p.lastMove > 3000) p.el.classList.add('special-idle');
-                    
-                    // Snap to target to stop jitter
-                    p.pos.x = p.target.x;
-                    p.pos.y = p.target.y;
                 }
 
-                // Apply visual position
                 p.el.style.left = p.pos.x + "px";
                 p.el.style.top = p.pos.y + "px";
             });
 
-            // 3. SEPARATION: Keep them from merging
+            // Separation logic
             const p1 = pets[0];
             const p2 = pets[1];
             const distDx = p2.pos.x - p1.pos.x;
             const distDy = p2.pos.y - p1.pos.y;
             const dist = Math.sqrt(distDx * distDx + distDy * distDy) || 0.1;
-
             if (dist < petRadius * 2) {
                 const overlap = (petRadius * 2) - dist;
-                const moveX = (distDx / dist) * (overlap / 2);
-                const moveY = (distDy / dist) * (overlap / 2);
-                p1.pos.x -= moveX;
-                p1.pos.y -= moveY;
-                p2.pos.x += moveX;
-                p2.pos.y += moveY;
+                p1.pos.x -= (distDx / dist) * (overlap / 2);
+                p1.pos.y -= (distDy / dist) * (overlap / 2);
+                p2.pos.x += (distDx / dist) * (overlap / 2);
+                p2.pos.y += (distDy / dist) * (overlap / 2);
             }
 
             requestAnimationFrame(update);
