@@ -5,136 +5,88 @@
         html, body { 
             margin: 0; padding: 0; 
             width: 100vw; height: 100vh; 
-            overflow: hidden; background: transparent; 
+            overflow: hidden; background: #eee; /* Light grey background to see the pets */
         }
 
-        /* All pets share this style */
         .pet-style {
             position: absolute;
-            width: 16px; height: 32px;
-            background-image: url('spritesheet.png');
-            background-size: 64px 128px;
+            width: 50px; height: 50px; /* Bigger boxes for testing */
             image-rendering: pixelated;
-            transform: scale(3);
-            transform-origin: top left;
-            transition: none; /* Ensure JS handles movement smoothly */
+            border: 2px solid black;
         }
 
-        /* Walking Animation */
-        .walking {
-            animation: walk-cycle 0.6s steps(4) infinite;
-        }
+        #pet1 { background: red; }
+        #pet2 { background: blue; }
 
-        /* Special Idle Animation */
-        .special-idle {
-            animation: special-cycle 1s steps(2) infinite;
-        }
-
-        @keyframes walk-cycle {
-            from { background-position-x: 0px; }
-            to { background-position-x: -64px; }
-        }
-
-        @keyframes special-cycle {
-            from { background-position-x: 0px; }
-            to { background-position-x: -32px; }
-        }
-
-        /* Directional Rows */
-        .face-down  { background-position-y: 0px; }
-        .face-right { background-position-y: -32px; }
-        .face-up    { background-position-y: -64px; }
-        .face-left  { background-position-y: -96px; }
+        .walking { opacity: 0.7; } /* Slight visual change when "walking" */
     </style>
 </head>
 <body>
-    <div id="pet1" class="pet-style face-down"></div>
-    <div id="pet2" class="pet-style face-down"></div>
+    <div id="pet1" class="pet-style"></div>
+    <div id="pet2" class="pet-style"></div>
 
     <script>
-        const walkSpeed = 4;
-        const petRadius = 24; // Distance to keep between pets (approx. sprite width)
+        const walkSpeed = 5;
+        const petRadius = 30;
         
-        // Initialize pets array
         let pets = [
             {
                 el: document.getElementById('pet1'),
-                pos: { x: 100, y: 100 },
-                target: { x: 100, y: 100 },
-                lastMove: Date.now()
+                pos: { x: 50, y: 50 },
+                target: { x: 50, y: 50 }
             },
             {
                 el: document.getElementById('pet2'),
-                pos: { x: 300, y: 100 }, // Started further away to be visible
-                target: { x: 300, y: 100 },
-                lastMove: Date.now()
+                pos: { x: 150, y: 50 },
+                target: { x: 150, y: 50 }
             }
         ];
         
         window.onclick = (e) => {
-            const mouseX = e.clientX;
-            const mouseY = e.clientY;
-
-            // Pet 1 goes slightly left of the click
-            pets[0].target.x = mouseX - 50;
-            pets[0].target.y = mouseY - 48;
-            pets[0].lastMove = Date.now();
-        
-            // Pet 2 goes slightly right of the click
-            pets[1].target.x = mouseX + 10;
-            pets[1].target.y = mouseY - 48;
-            pets[1].lastMove = Date.now();
+            pets[0].target.x = e.clientX - 25;
+            pets[0].target.y = e.clientY - 25;
+            pets[1].target.x = e.clientX + 30;
+            pets[1].target.y = e.clientY - 25;
         };
         
         function update() {
-            // 1. Update individual pet movement
             pets.forEach(p => {
                 const dx = p.target.x - p.pos.x;
                 const dy = p.target.y - p.pos.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
+                const dist = Math.sqrt(dx * dx + dy * dy);
         
-                if (distance > walkSpeed) {
-                    p.el.classList.remove('special-idle');
+                if (dist > walkSpeed) {
+                    p.pos.x += (dx / dist) * walkSpeed;
+                    p.pos.y += (dy / dist) * walkSpeed;
                     p.el.classList.add('walking');
-                    
-                    // Directional logic
-                    p.el.classList.remove('face-up', 'face-down', 'face-left', 'face-right');
-                    if (Math.abs(dx) > Math.abs(dy)) {
-                        p.el.classList.add(dx > 0 ? 'face-right' : 'face-left');
-                    } else {
-                        p.el.classList.add(dy > 0 ? 'face-down' : 'face-up');
-                    }
-        
-                    p.pos.x += (dx / distance) * walkSpeed;
-                    p.pos.y += (dy / distance) * walkSpeed;
                 } else {
                     p.el.classList.remove('walking');
-                    // Idle animation after 3 seconds of standing still
-                    if (Date.now() - p.lastMove > 3000) {
-                        p.el.classList.add('special-idle');
-                    }
                 }
             });
         
-            // 2. COLLISION AVOIDANCE (Pushing pets apart)
+            // Collision
             const p1 = pets[0];
             const p2 = pets[1];
             const dx = p2.pos.x - p1.pos.x;
             const dy = p2.pos.y - p1.pos.y;
-            // Use || 0.1 to prevent division by zero if they are at the exact same spot
             const dist = Math.sqrt(dx * dx + dy * dy) || 0.1;
         
-            const minAllowedDist = petRadius * 2;
-            if (dist < minAllowedDist) {
-                const overlap = minAllowedDist - dist;
-                // Move each pet away by half the overlap distance
-                const moveX = (dx / dist) * (overlap / 2);
-                const moveY = (dy / dist) * (overlap / 2);
-        
-                p1.pos.x -= moveX;
-                p1.pos.y -= moveY;
-                p2.pos.x += moveX;
-                p2.pos.y += moveY;
+            if (dist < petRadius * 2) {
+                const overlap = (petRadius * 2) - dist;
+                p1.pos.x -= (dx / dist) * (overlap / 2);
+                p1.pos.y -= (dy / dist) * (overlap / 2);
+                p2.pos.x += (dx / dist) * (overlap / 2);
+                p2.pos.y += (dy / dist) * (overlap / 2);
             }
         
-            // 3. Render the positions
+            pets.forEach(p => {
+                p.el.style.left = `${p.pos.x}px`;
+                p.el.style.top = `${p.pos.y}px`;
+            });
+        
+            requestAnimationFrame(update);
+        }
+        update();
+    </script>
+</body>
+</html>
