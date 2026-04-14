@@ -8,7 +8,7 @@
             overflow: hidden; background: transparent; 
         }
 
-        #pet {
+        .pet-style {
             position: absolute;
             width: 16px; height: 32px;
             background-image: url('spritesheet.png');
@@ -47,57 +47,47 @@
 </head>
 <body>
     <div id="pet" class="face-down"></div>
-    
+    <div id="pet2" class="face-down"></div>
 
     <script>
-            // Configuration
             const walkSpeed = 4;
-            const petRadius = 24; // Distance to keep between pets (half of sprite width * scale)
-        
-            // Pet Data
+            const petRadius = 30; // The "bubble" around each pet
+            
+            // Initialize pets with different starting positions
             let pets = [
                 {
-                    el: document.getElementById('pet'),
+                    el: document.getElementById('pet1'),
                     pos: { x: 100, y: 100 },
                     target: { x: 100, y: 100 },
                     lastMove: Date.now()
                 },
                 {
-                    // We create the second pet element via JS or add it to HTML
-                    el: createPetElement('pet2'), 
-                    pos: { x: 200, y: 200 },
-                    target: { x: 200, y: 200 },
+                    el: document.getElementById('pet2'),
+                    pos: { x: 200, y: 100 }, // Start 100px to the right
+                    target: { x: 200, y: 100 },
                     lastMove: Date.now()
                 }
             ];
-        
-            function createPetElement(id) {
-                const div = document.createElement('div');
-                div.id = id;
-                div.className = 'face-down';
-                // Add a CSS class or inline style to match your #pet styles
-                div.style.cssText = "position:absolute; width:16px; height:32px; background-image:url('spritesheet.png'); background-size:64px 128px; image-rendering:pixelated; transform:scale(3); transform-origin:top left;";
-                document.body.appendChild(div);
-                return div;
-            }
-        
+            
             window.onclick = (e) => {
-                // Both pets move to the click, but will push each other away
-                pets.forEach(p => {
-                    p.target.x = e.clientX - 24;
-                    p.target.y = e.clientY - 48;
-                    p.lastMove = Date.now();
-                });
+                // Pet 1 goes to the click
+                pets[0].target.x = e.clientX - 24;
+                pets[0].target.y = e.clientY - 48;
+                pets[0].lastMove = Date.now();
+            
+                // Pet 2 goes slightly to the right of the click so they don't overlap
+                pets[1].target.x = e.clientX + 24; 
+                pets[1].target.y = e.clientY - 48;
+                pets[1].lastMove = Date.now();
             };
-        
+            
             function update() {
-                // 1. Move each pet toward their target
                 pets.forEach(p => {
                     const dx = p.target.x - p.pos.x;
                     const dy = p.target.y - p.pos.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-        
-                    if (dist > walkSpeed) {
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+            
+                    if (distance > walkSpeed) {
                         p.el.classList.remove('special-idle');
                         p.el.classList.add('walking');
                         
@@ -108,48 +98,45 @@
                         } else {
                             p.el.classList.add(dy > 0 ? 'face-down' : 'face-up');
                         }
-        
-                        p.pos.x += (dx / dist) * walkSpeed;
-                        p.pos.y += (dy / dist) * walkSpeed;
+            
+                        p.pos.x += (dx / distance) * walkSpeed;
+                        p.pos.y += (dy / distance) * walkSpeed;
                     } else {
                         p.el.classList.remove('walking');
-                        if (Date.now() - p.lastMove > 3000) p.el.classList.add('special-idle');
+                        if (Date.now() - p.lastMove > 3000) {
+                            p.el.classList.add('special-idle');
+                        }
                     }
                 });
-        
-                // 2. COLLISION AVOIDANCE
-                // Compare Pet 0 and Pet 1
+            
+                // --- SEPARATION LOGIC ---
                 const p1 = pets[0];
                 const p2 = pets[1];
-                
                 const dx = p2.pos.x - p1.pos.x;
                 const dy = p2.pos.y - p1.pos.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                const minDistance = petRadius * 2; // The "personal space" bubble
-        
-                if (distance < minDistance) {
-                    // Calculate how much they overlap
-                    const overlap = minDistance - distance;
-                    // Get the direction vector to push them apart
-                    const nx = dx / distance; 
-                    const ny = dy / distance;
-        
-                    // Push both pets away from each other by half the overlap
-                    p1.pos.x -= nx * (overlap / 2);
-                    p1.pos.y -= ny * (overlap / 2);
-                    p2.pos.x += nx * (overlap / 2);
-                    p2.pos.y += ny * (overlap / 2);
+                const dist = Math.sqrt(dx * dx + dy * dy);
+            
+                if (dist < petRadius * 2) {
+                    const overlap = (petRadius * 2) - dist;
+                    const moveX = (dx / dist) * (overlap / 2);
+                    const moveY = (dy / dist) * (overlap / 2);
+            
+                    // Push them away from each other
+                    p1.pos.x -= moveX;
+                    p1.pos.y -= moveY;
+                    p2.pos.x += moveX;
+                    p2.pos.y += moveY;
                 }
-        
-                // 3. Render positions
+            
+                // Apply positions to the screen
                 pets.forEach(p => {
                     p.el.style.left = `${p.pos.x}px`;
                     p.el.style.top = `${p.pos.y}px`;
                 });
-        
+            
                 requestAnimationFrame(update);
             }
-        
+            
             update();
         </script>
 </body>
