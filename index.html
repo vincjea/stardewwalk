@@ -159,8 +159,8 @@
         }
 
         const pets = [
-            { el: document.getElementById('pet1'), pos: {x:260,y:450}, target: {x:260,y:450} },
-            { el: document.getElementById('pet2'), pos: {x:370,y:460}, target: {x:370,y:460} }
+            { el: document.getElementById('pet1'), pos: {x:280,y:420}, target: {x:280,y:420} },
+            { el: document.getElementById('pet2'), pos: {x:400,y:480}, target: {x:400,y:480} }
         ];
 
         let selectedIndex = 0;
@@ -176,12 +176,11 @@
             p.el.style.top  = p.pos.y + 'px';
         });
 
-        window.addEventListener('click', e => {
+        document.getElementById('scene').addEventListener('click', e => {
             if (e.target.id === 'debug-btn') return;
-            const sr = sceneRect();
-            // Convert viewport click to scene-local coords
-            const cx = e.clientX - sr.left - HALF;
-            const cy = e.clientY - sr.top  - HALF;
+            // e.offsetX/Y gives click position relative to scene element
+            const cx = e.offsetX - HALF;
+            const cy = e.offsetY - HALF;
             if (!collidesWithAny(cx + HALF, cy + HALF)) {
                 const p = pets[selectedIndex];
                 p.target.x = cx;
