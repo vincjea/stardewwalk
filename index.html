@@ -34,7 +34,7 @@
         .pet {
             position: absolute;
             width: 128px;
-            height: 128px;
+            height: 140px;
             image-rendering: pixelated;
             cursor: pointer;
             overflow: hidden;
@@ -53,7 +53,7 @@
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            transform: scale(1.05);
+            transform: scale(1.15);
         }
         .walking.girl {
             background-image: url('gina-walk.png');
@@ -61,7 +61,6 @@
             background-position-y: -19px;
             background-repeat: no-repeat;
             animation: walk5 0.5s steps(5, end) infinite;
-            transform: scale(.95);
         }
         .walking.boy {
             background-image: url('vince-walk.png');
@@ -69,7 +68,6 @@
             background-position-y: -19px;
             background-repeat: no-repeat;
             animation: walk5 0.5s steps(5, end) infinite;
-            transform: scale(.95);
         }
         @keyframes walk5 {
             from { background-position-x: -19px; }
