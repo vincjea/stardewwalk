@@ -10,109 +10,113 @@
             user-select: none;
         }
 
+        /*
+          Sprite sheet facts (measured):
+            Source image: 1280x1280px
+            Grid: 5 cols x 5 rows
+            Each frame: 256x256px
+            All rows are the same left-facing walk cycle
+
+          Display size: 128x128px (0.5x scale)
+            background-size: 640x640px  (1280 * 0.5)
+            Frame stride:    128px      (256  * 0.5)
+            Animation: 0 to -640px in 5 steps
+        */
+
         .pet {
             position: absolute;
             width: 128px;
             height: 128px;
             image-rendering: pixelated;
-            background-repeat: no-repeat;
             cursor: pointer;
-            transition: outline 0.1s;
         }
 
-        .selected {
-            outline: 2px dashed white;
-            z-index: 100;
-        }
+        .selected { outline: 2px dashed white; z-index: 100; }
 
-        /* --- IDLE --- */
         .idle.girl {
             background-image: url('Gemini_Generated_Image_mk68p7mk68p7mk68_1.jpg');
             background-size: contain;
+            background-repeat: no-repeat;
             background-position: center;
         }
         .idle.boy {
             background-image: url('Gemini_Generated_Image_mk68p7mk68p7mk68_2.jpg');
             background-size: contain;
+            background-repeat: no-repeat;
             background-position: center;
         }
 
-        /* --- WALKING ---
-           Sprite sheet: 4 frames wide × 4 rows tall = 1024×1024px source
-           Displayed at 128px → scale factor = 128/256 = 0.5
-           background-size = 1024 * 0.5 = 512px square
-           Each frame = 128px wide, each row = 128px tall
-        */
-        .walking.girl { background-image: url('gina-walk.jpg'); }
-        .walking.boy  { background-image: url('vince-walk.jpg'); }
-
-        .walking {
-            background-size: 512px 512px;
-            animation: walk-cycle 0.6s steps(4, end) infinite;
+        .walking.girl {
+            background-image: url('gina-walk.png');
+            background-size: 640px 640px;
+            background-position-y: 0px;
+            background-repeat: no-repeat;
+            animation: walk5 0.5s steps(5, end) infinite;
+        }
+        .walking.boy {
+            background-image: url('vince-walk.png');
+            background-size: 640px 640px;
+            background-position-y: 0px;
+            background-repeat: no-repeat;
+            animation: walk5 0.5s steps(5, end) infinite;
         }
 
-        /* Row offsets at display scale (128px per row) */
-        .face-down  { background-position-y: 0px; }
-        .face-left  { background-position-y: -128px; }
-        .face-up    { background-position-y: -256px; }
-        .face-right { background-position-y: -384px; }
-
-        @keyframes walk-cycle {
+        @keyframes walk5 {
             from { background-position-x: 0px; }
-            to   { background-position-x: -512px; }
+            to   { background-position-x: -640px; }
         }
 
-        /* Selection hint */
+        .face-right { transform: scaleX(-1); }
+
         #hint {
             position: fixed;
-            bottom: 16px;
-            left: 50%;
+            bottom: 16px; left: 50%;
             transform: translateX(-50%);
-            color: rgba(255,255,255,0.5);
+            color: rgba(255,255,255,0.45);
             font: 13px/1 sans-serif;
             pointer-events: none;
+            white-space: nowrap;
         }
     </style>
 </head>
 <body>
-    <div id="pet1" class="pet girl idle face-down selected"></div>
-    <div id="pet2" class="pet boy  idle face-down"></div>
-    <div id="hint">Click a pet to select · Click anywhere to move</div>
+    <div id="pet1" class="pet girl idle selected"></div>
+    <div id="pet2" class="pet boy  idle"></div>
+    <div id="hint">Click a pet to select · Click elsewhere to move</div>
 
     <script>
         const SPEED = 3;
+        const HALF  = 64;
 
         const pets = [
-            { el: document.getElementById('pet1'), pos: {x:100, y:150}, target: {x:100, y:150} },
-            { el: document.getElementById('pet2'), pos: {x:400, y:150}, target: {x:400, y:150} }
+            { el: document.getElementById('pet1'), pos: {x:120,y:200}, target: {x:120,y:200} },
+            { el: document.getElementById('pet2'), pos: {x:380,y:200}, target: {x:380,y:200} }
         ];
 
         let selectedIndex = 0;
 
-        /* Select a pet by clicking it */
+        function setSelected(i) {
+            selectedIndex = i;
+            pets.forEach((p, ii) => p.el.classList.toggle('selected', ii === i));
+        }
+
         pets.forEach((p, i) => {
-            p.el.addEventListener('click', e => {
-                e.stopPropagation();
-                selectedIndex = i;
-                pets.forEach((pp, ii) => pp.el.classList.toggle('selected', ii === i));
-            });
+            p.el.addEventListener('click', e => { e.stopPropagation(); setSelected(i); });
+            p.el.style.left = p.pos.x + 'px';
+            p.el.style.top  = p.pos.y + 'px';
         });
 
-        /* Move selected pet on canvas click */
         window.addEventListener('click', e => {
             const p = pets[selectedIndex];
-            /* Centre the pet on the click */
-            p.target.x = e.clientX - 64;
-            p.target.y = e.clientY - 64;
+            p.target.x = e.clientX - HALF;
+            p.target.y = e.clientY - HALF;
         });
 
-        const DIRS = ['face-down','face-left','face-up','face-right'];
-
         function update() {
-            pets.forEach(p => {
-                const dx = p.target.x - p.pos.x;
-                const dy = p.target.y - p.pos.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
+            for (const p of pets) {
+                const dx   = p.target.x - p.pos.x;
+                const dy   = p.target.y - p.pos.y;
+                const dist = Math.hypot(dx, dy);
 
                 if (dist > SPEED) {
                     p.pos.x += (dx / dist) * SPEED;
@@ -120,24 +124,20 @@
 
                     p.el.classList.remove('idle');
                     p.el.classList.add('walking');
-                    p.el.classList.remove(...DIRS);
 
-                    if (Math.abs(dx) > Math.abs(dy)) {
-                        p.el.classList.add(dx > 0 ? 'face-right' : 'face-left');
-                    } else {
-                        p.el.classList.add(dy > 0 ? 'face-down' : 'face-up');
+                    if (Math.abs(dx) >= Math.abs(dy)) {
+                        p.el.classList.toggle('face-right', dx > 0);
                     }
                 } else {
                     p.pos.x = p.target.x;
                     p.pos.y = p.target.y;
-                    p.el.classList.remove('walking', ...DIRS);
+                    p.el.classList.remove('walking', 'face-right');
                     p.el.classList.add('idle');
                 }
 
                 p.el.style.left = p.pos.x + 'px';
                 p.el.style.top  = p.pos.y + 'px';
-            });
-
+            }
             requestAnimationFrame(update);
         }
 
