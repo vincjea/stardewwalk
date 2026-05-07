@@ -34,13 +34,13 @@
         .selected { outline: 2px dashed white; z-index: 100; }
 
         .idle.girl {
-            background-image: url('Gemini_Generated_Image_mk68p7mk68p7mk68_1.jpg');
+            background-image: url('gina-idle.png');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
         }
         .idle.boy {
-            background-image: url('Gemini_Generated_Image_mk68p7mk68p7mk68_2.jpg');
+            background-image: url('vince-idle.png');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
@@ -48,14 +48,14 @@
 
         .walking.girl {
             background-image: url('gina-walk.png');
-            background-size: 640px 640px;
+            background-size: 1024px 1024px;
             background-position-y: 0px;
             background-repeat: no-repeat;
             animation: walk5 0.5s steps(5, end) infinite;
         }
         .walking.boy {
             background-image: url('vince-walk.png');
-            background-size: 640px 640px;
+            background-size: 1024px 1024px;
             background-position-y: 0px;
             background-repeat: no-repeat;
             animation: walk5 0.5s steps(5, end) infinite;
@@ -63,7 +63,7 @@
 
         @keyframes walk5 {
             from { background-position-x: 0px; }
-            to   { background-position-x: -640px; }
+            to   { background-position-x: -1024px; }
         }
 
         .face-right { transform: scaleX(-1); }
@@ -126,7 +126,7 @@
                     p.el.classList.add('walking');
 
                     if (Math.abs(dx) >= Math.abs(dy)) {
-                        p.el.classList.toggle('face-right', dx > 0);
+                        p.el.classList.toggle('face-right', dx < 0);
                     }
                 } else {
                     p.pos.x = p.target.x;
