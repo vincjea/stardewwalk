@@ -82,6 +82,8 @@
             border: 2px dashed rgba(255,80,80,0.7);
             background: rgba(255,80,80,0.08);
             display: none;
+            /* Add these lines */
+            transform-origin: top left; 
         }
         .hitbox.show { display: block; }
 
@@ -247,7 +249,13 @@
             }
             requestAnimationFrame(update);
         }
-
+        // Apply rotations to the visual debug boxes
+        const hitboxDivs = document.querySelectorAll('.hitbox');
+        HITBOXES.forEach((h, i) => {
+            if (hitboxDivs[i]) {
+                hitboxDivs[i].style.transform = `rotate(${h.rot}deg)`;
+            }
+        });
         update();
     </script>
 </body>
