@@ -118,10 +118,10 @@
         <div class="hitbox" style="left:476px; top:245px; width:140px; height:266px;" data-name="bookshelf"></div>
         <div class="hitbox" style="left:231px; top:518px; width:182px; height:112px;" data-name="round_table"></div>
         <div class="hitbox" style="left:301px; top:203px; width:140px; height:112px;" data-name="shelf_wall"></div>
+        <div id="pet1" class="pet girl idle selected"></div>
+        <div id="pet2" class="pet boy  idle"></div>
     </div>
 
-    <div id="pet1" class="pet girl idle selected"></div>
-    <div id="pet2" class="pet boy  idle"></div>
     <div id="hint">Click a pet to select · Click anywhere to move</div>
     <button id="debug-btn">show hitboxes</button>
 
@@ -147,14 +147,11 @@
             {x:301, y:203, w:140, h:112}, // shelf wall
         ];
 
+        // cx/cy are scene-local coordinates (pet center)
         function collidesWithAny(cx, cy) {
-            const sr = sceneRect();
-            // convert viewport coords to scene-local
-            const lx = cx - sr.left;
-            const ly = cy - sr.top;
             for (const h of HITBOXES) {
-                if (lx + PET_R > h.x && lx - PET_R < h.x + h.w &&
-                    ly + PET_R > h.y && ly - PET_R < h.y + h.h) {
+                if (cx + PET_R > h.x && cx - PET_R < h.x + h.w &&
+                    cy + PET_R > h.y && cy - PET_R < h.y + h.h) {
                     return true;
                 }
             }
@@ -162,8 +159,8 @@
         }
 
         const pets = [
-            { el: document.getElementById('pet1'), pos: {x:300,y:400}, target: {x:300,y:400} },
-            { el: document.getElementById('pet2'), pos: {x:450,y:420}, target: {x:450,y:420} }
+            { el: document.getElementById('pet1'), pos: {x:260,y:450}, target: {x:260,y:450} },
+            { el: document.getElementById('pet2'), pos: {x:370,y:460}, target: {x:370,y:460} }
         ];
 
         let selectedIndex = 0;
@@ -181,9 +178,10 @@
 
         window.addEventListener('click', e => {
             if (e.target.id === 'debug-btn') return;
-            const cx = e.clientX - HALF;
-            const cy = e.clientY - HALF;
-            // Only set target if destination isn't inside a hitbox
+            const sr = sceneRect();
+            // Convert viewport click to scene-local coords
+            const cx = e.clientX - sr.left - HALF;
+            const cy = e.clientY - sr.top  - HALF;
             if (!collidesWithAny(cx + HALF, cy + HALF)) {
                 const p = pets[selectedIndex];
                 p.target.x = cx;
