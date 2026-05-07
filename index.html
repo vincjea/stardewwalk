@@ -5,95 +5,83 @@
         html, body { 
             margin: 0; padding: 0; 
             width: 100vw; height: 100vh; 
-            overflow: hidden; background: #transparent; /* Darker background to see the glow */
+            overflow: hidden; background: #222; /* Dark background for contrast */
         }
 
         .pet-style {
             position: absolute;
-            width: 16px; height: 32px;
-            background-image: url('spritesheet.png');
-            background-size: 64px 128px;
+            width: 64px; /* Adjusted for your sprite size */
+            height: 64px;
             image-rendering: pixelated;
-            transform: scale(3);
+            transform: scale(2);
             transform-origin: top left;
-            cursor: pointer; /* Shows you can click them */
-            transition: box-shadow 0.2s;
+            cursor: pointer;
+            transition: filter 0.2s;
         }
 
-        /* High-visibility selection glow */
+        /* Sprite Sheet Assignments */
+        .girl { background-image: url('gina-walk.jpg'); background-size: 256px 256px; }
+        .boy  { background-image: url('vince-walk.jpg'); background-size: 256px 256px; }
+
+        /* Idle State - Uses your high-res static images */
+        .idle.girl { background-image: url('Gemini_Generated_Image_mk68p7mk68p7mk68_1.jpg'); background-size: contain; background-position: center; }
+        .idle.boy  { background-image: url('Gemini_Generated_Image_mk68p7mk68p7mk68_2.jpg'); background-size: contain; background-position: center; }
+
         .selected {
-            filter: drop-shadow(0 0 3px rgba(255, 44, 118, 0.39));
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.8));
             z-index: 100;
         }
 
-        .walking { animation: walk-cycle 0.6s steps(4) infinite; }
-        @keyframes walk-cycle { from { background-position-x: 0px; } to { background-position-x: -64px; } }
+        /* Walking Animation */
+        .walking { animation: walk-cycle 0.8s steps(4) infinite; }
+        @keyframes walk-cycle { 
+            from { background-position-x: 0px; } 
+            to { background-position-x: -256px; } 
+        }
 
+        /* Directional Rows based on your 4x4 sheet */
         .face-down  { background-position-y: 0px; }
-        .face-right { background-position-y: -32px; }
-        .face-up    { background-position-y: -64px; }
-        .face-left  { background-position-y: -96px; }
+        .face-left  { background-position-y: -64px; }
+        .face-up    { background-position-y: -128px; }
+        .face-right { background-position-y: -192px; }
     </style>
 </head>
 <body>
-    <div id="pet1" class="pet-style face-down selected"></div>
-    <div id="pet2" class="pet-style face-down"></div>
+    <div id="pet1" class="pet-style girl face-down selected idle"></div>
+    <div id="pet2" class="pet-style boy face-down idle"></div>
 
     <script>
-        const walkSpeed = 4;
-        const petRadius = 24;
-        let selectedIndex = 0; // Starts with Pet 1
+        const walkSpeed = 3;
+        const petRadius = 40;
+        let selectedIndex = 0;
 
         const pets = [
             {
                 el: document.getElementById('pet1'),
-                pos: { x: 100, y: 100 },
-                target: { x: 100, y: 100 }
+                pos: { x: 100, y: 150 },
+                target: { x: 100, y: 150 }
             },
             {
                 el: document.getElementById('pet2'),
-                pos: { x: 300, y: 100 },
-                target: { x: 300, y: 100 }
+                pos: { x: 400, y: 150 },
+                target: { x: 400, y: 150 }
             }
         ];
 
-        // 1. SPACEBAR TOGGLE
+        // Selection Toggle
         window.addEventListener('keydown', (e) => {
             if (e.code === "Space") {
                 e.preventDefault();
-                toggleSelection();
+                selectedIndex = (selectedIndex === 0) ? 1 : 0;
+                pets.forEach((p, i) => i === selectedIndex ? p.el.classList.add('selected') : p.el.classList.remove('selected'));
             }
         });
 
-        // 2. CLICK TO SELECT (If space fails)
-        pets.forEach((p, index) => {
-            p.el.addEventListener('click', (e) => {
-                e.stopPropagation(); // Don't move when just selecting
-                selectedIndex = index;
-                updateVisualSelection();
-            });
-        });
-
-        function toggleSelection() {
-            selectedIndex = (selectedIndex === 0) ? 1 : 0;
-            updateVisualSelection();
-        }
-
-        function updateVisualSelection() {
-            pets.forEach((p, i) => {
-                if (i === selectedIndex) {
-                    p.el.classList.add('selected');
-                } else {
-                    p.el.classList.remove('selected');
-                }
-            });
-        }
-
-        // 3. MOVE ONLY SELECTED
+        // Click to move selected
         window.addEventListener('click', (e) => {
             const activePet = pets[selectedIndex];
-            activePet.target.x = e.clientX - 24;
-            activePet.target.y = e.clientY - 48;
+            activePet.target.x = e.clientX - 32;
+            activePet.target.y = e.clientY - 32;
         });
 
         function update() {
@@ -103,9 +91,10 @@
                 const distance = Math.sqrt(dx * dx + dy * dy);
 
                 if (distance > walkSpeed) {
+                    p.el.classList.remove('idle');
                     p.el.classList.add('walking');
                     
-                    // Direction
+                    // Directional Logic
                     p.el.classList.remove('face-up', 'face-down', 'face-left', 'face-right');
                     if (Math.abs(dx) > Math.abs(dy)) {
                         p.el.classList.add(dx > 0 ? 'face-right' : 'face-left');
@@ -117,15 +106,15 @@
                     p.pos.y += (dy / distance) * walkSpeed;
                 } else {
                     p.el.classList.remove('walking');
+                    p.el.classList.add('idle'); // Switch to your provided idle image
                 }
 
                 p.el.style.left = p.pos.x + "px";
                 p.el.style.top = p.pos.y + "px";
             });
 
-            // Separation logic
-            const p1 = pets[0];
-            const p2 = pets[1];
+            // Keep them from overlapping
+            const p1 = pets[0], p2 = pets[1];
             const distDx = p2.pos.x - p1.pos.x;
             const distDy = p2.pos.y - p1.pos.y;
             const dist = Math.sqrt(distDx * distDx + distDy * distDy) || 0.1;
