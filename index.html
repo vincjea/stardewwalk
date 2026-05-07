@@ -154,17 +154,34 @@
 
         // cx/cy are scene-local coordinates (pet center)
         function collidesWithAny(cx, cy) {
-            // Room boundary check
-            if (cx < FLOOR.minX || cx > FLOOR.maxX || cy < FLOOR.minY || cy > FLOOR.maxY) return true;
-            for (const h of HITBOXES) {
-                if (cx + PET_R > h.x && cx - PET_R < h.x + h.w &&
-                    cy + PET_R > h.y && cy - PET_R < h.y + h.h) {
-                    return true;
-                }
-            }
-            return false;
-        }
+    if (cx < FLOOR.minX || cx > FLOOR.maxX || cy < FLOOR.minY || cy > FLOOR.maxY) return true;
 
+    for (const h of HITBOXES) {
+        // 1. Get the center of the hitbox
+        const hCenterX = h.x + h.w / 2;
+        const hCenterY = h.y + h.h / 2;
+
+        // 2. Translate pet position relative to hitbox center
+        const dx = cx - hCenterX;
+        const dy = cy - hCenterY;
+
+        // 3. Rotate the pet's point by the NEGATIVE of the box's rotation
+        // Convert degrees to radians
+        const angle = -h.rot * (Math.PI / 180);
+        const rotatedX = dx * Math.cos(angle) - dy * Math.sin(angle);
+        const rotatedY = dx * Math.sin(angle) + dy * Math.cos(angle);
+
+        // 4. Perform AABB check on the rotated coordinates
+        const halfW = h.w / 2;
+        const halfH = h.h / 2;
+
+        if (Math.abs(rotatedX) < halfW + PET_R && 
+            Math.abs(rotatedY) < halfH + PET_R) {
+            return true;
+        }
+    }
+    return false;
+}
         const pets = [
             { el: document.getElementById('pet1'), pos: {x:280,y:420}, target: {x:280,y:420} },
             { el: document.getElementById('pet2'), pos: {x:400,y:480}, target: {x:400,y:480} }
