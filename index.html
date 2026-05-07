@@ -40,7 +40,7 @@
             overflow: hidden;
         }
 
-        .selected { outline: 2px dashed white; z-index: 100; }
+        .selected { outline: 2px dashed rgba(255,255,255,0.8); outline-offset: -16px; z-index: 100; }
 
         .idle.girl {
             background-image: url('gina-idle.png');
@@ -147,8 +147,13 @@
             {x:301, y:203, w:140, h:112}, // shelf wall
         ];
 
+        // Room floor bounds — pet center must stay within
+        const FLOOR = { minX: 80, maxX: 680, minY: 230, maxY: 690 };
+
         // cx/cy are scene-local coordinates (pet center)
         function collidesWithAny(cx, cy) {
+            // Room boundary check
+            if (cx < FLOOR.minX || cx > FLOOR.maxX || cy < FLOOR.minY || cy > FLOOR.maxY) return true;
             for (const h of HITBOXES) {
                 if (cx + PET_R > h.x && cx - PET_R < h.x + h.w &&
                     cy + PET_R > h.y && cy - PET_R < h.y + h.h) {
@@ -178,14 +183,14 @@
 
         document.getElementById('scene').addEventListener('click', e => {
             if (e.target.id === 'debug-btn') return;
-            // e.offsetX/Y gives click position relative to scene element
-            const cx = e.offsetX - HALF;
-            const cy = e.offsetY - HALF;
-            if (!collidesWithAny(cx + HALF, cy + HALF)) {
-                const p = pets[selectedIndex];
-                p.target.x = cx;
-                p.target.y = cy;
-            }
+            const sr = document.getElementById('scene').getBoundingClientRect();
+            // Use clientX/Y minus scene rect — works regardless of which child was clicked
+            const cx = e.clientX - sr.left - HALF;
+            const cy = e.clientY - sr.top  - HALF;
+            // Always accept the click — movement loop stops at hitbox edge naturally
+            const p = pets[selectedIndex];
+            p.target.x = Math.max(FLOOR.minX - HALF, Math.min(FLOOR.maxX - HALF, cx));
+            p.target.y = Math.max(FLOOR.minY - HALF, Math.min(FLOOR.maxY - HALF, cy));
         });
 
         document.getElementById('debug-btn').addEventListener('click', e => {
